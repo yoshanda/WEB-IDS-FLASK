@@ -19,39 +19,59 @@ hamburger.addEventListener('click', function() {
     navMenu.classList.toggle('hidden')
 });
 
-//input file
-// const label = ["Dos", "Probe", "R2L", "U2R", "Normal"]
-// async function predict(file) {
-//     file = file.files[0]
-//     const form = new FormData()
-//     form.append("file", file)
-//     const response = await fetch("http://localhost:5000/home", {
-//         method: "POST",
-//         body: form
-//     })
-//     const result = await response.json()
-//     const ol = document.getElementById("hasil")
-//     result.forEach(hasil => {
-//         const li = document.createElement("li")
-//         li.innerHTML = label[hasil.indexOf(Math.max(...hasil))] + " => " + Math.max(...hasil) * 100 + " %"
-//         ol.appendChild(li)
-//     })
-// }
-
-const label = ["Anomali", "Normal"]
-async function predict(file) {
-    file = file.files[0]
-    const form = new FormData()
-    form.append("file", file)
-    const response = await fetch("http://localhost:5000/home", {
+async function readFile(input) {
+    // const label = ["Dos", "Probe", "R2L", "U2R", "normal"]
+    const label = ["normal", "anomali"]
+    let file = input.files[0];
+    let reader = new FileReader();
+    reader.readAsText(file);
+    reader.onload = function () {
+        let text = reader.result;
+        let lines = text.split("\n");
+        let data = [];
+        for (let i = 0; i < lines.length - 1; i++) {
+            data.push(lines[i].split(","));
+        }
+        let table = document.getElementById("tabel_hasil");
+        let tbody = table.getElementsByTagName("tbody")[0];
+        tbody.innerHTML = "";
+        for (let i = 1; i < data.length; i++) {
+            let row = tbody.insertRow();
+            for (let j = 0; j < 8; j++) {
+                if (j == 5) {
+                    let cell = row.insertCell();
+                    cell.innerHTML = "...";
+                } else if (j == 7) {
+                    let cell = row.insertCell();
+                    cell.innerHTML = "Progress...";
+                } else if (j == 6) {
+                    let cell = row.insertCell();
+                    cell.innerHTML = label[parseInt(data[i][44])];
+                } else {
+                    let cell = row.insertCell();
+                    cell.innerHTML = data[i][j + 1];
+                }
+            }
+        }
+    };
+    reader.onerror = function () {
+        console.log(reader.error);
+    };
+    const formData = new FormData();
+    formData.append('file', file);
+    const predict = await fetch("http://localhost:5000/predict", {
         method: "POST",
-        body: form
-    })
-    const result = await response.json()
-    const ol = document.getElementById("hasil")
-    result.forEach(hasil => {
-        const li = document.createElement("li")
-        li.innerHTML = label[hasil.indexOf(Math.max(...hasil))] + " => " + Math.max(...hasil) * 100 + " %"
-        ol.appendChild(li)
+        body: formData,
+    });
+    const result = await predict.json();
+    let tbody = document.getElementById("tabel_hasil").getElementsByTagName("tbody")[0];
+    console.log(result)
+    result.forEach((element, index) => {
+        let row = tbody.rows[index];
+        let cell = row.cells[7];
+        console.log(element)
+        console.log(element < 0.8)
+        cell.innerHTML = label[element[0] < 0.0001 ? 0 : 1];
+        // cell.innerHTML = element[0] < 0.4 ? 0 : 1;
     })
 }

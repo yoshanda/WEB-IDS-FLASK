@@ -12,47 +12,28 @@ app = Flask(__name__)
 cors = CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
 
-#fungsi transformasi data untuk pengkategorian serangan
-def change_label(data):
-  data.label.replace(['apache2','back','land','neptune','mailbomb','pod','processtable','smurf','teardrop','udpstorm','worm'],'Anomali',inplace=True) #Dos
-  data.label.replace(['ftp_write','guess_passwd','httptunnel','imap','multihop','named','phf','sendmail','snmpgetattack','snmpguess','spy','warezclient','warezmaster','xlock','xsnoop'],'Anomali',inplace=True) #R2L
-  data.label.replace(['ipsweep','mscan','nmap','portsweep','saint','satan'],'Anomali',inplace=True) #Probe
-  data.label.replace(['buffer_overflow','loadmodule','perl','ps','rootkit','sqlattack','xterm'],'Anomali',inplace=True) #u@R
-
-
 #fungsi preprocessing data
 def preprocessing(file):
-    #kolom untuk dataset
-    cols = [
-        'duration', 'protocol_type', 'service', 'flag', 'src_bytes', 'dst_bytes', 'land', 'wrong_fragment', 'urgent', 'hot',
-        'num_failed_logins', 'logged_in', 'num_compromised', 'root_shell', 'su_attempted', 'num_root', 'num_file_creations', 'num_shells',
-        'num_access_files', 'num_outbound_cmds', 'is_host_login', 'is_guest_login', 'count', 'srv_count', 'serror_rate',
-        'srv_serror_rate', 'rerror_rate', 'srv_rerror_rate', 'same_srv_rate', 'diff_srv_rate', 'srv_diff_host_rate', 'dst_host_count',
-        'dst_host_srv_count', 'dst_host_same_srv_rate','dst_host_diff_srv_rate', 'dst_host_same_src_port_rate',
-        'dst_host_srv_diff_host_rate', 'dst_host_serror_rate', 'dst_host_srv_serror_rate', 'dst_host_rerror_rate',
-        'dst_host_srv_rerror_rate', 'label', 'difficulty_level'
-    ]
-
     #daftar kolom numerik untuk standarisasi/normalisasi data
     numeric_columns = [
-        "duration","src_bytes","dst_bytes","land","wrong_fragment","urgent","hot",
-        "num_failed_logins","logged_in","num_compromised","root_shell","su_attempted","num_root","num_file_creations","num_shells",
-        "num_access_files","num_outbound_cmds","is_host_login","is_guest_login","count","srv_count","serror_rate","srv_serror_rate",
-        "rerror_rate","srv_rerror_rate","same_srv_rate","diff_srv_rate","srv_diff_host_rate","dst_host_count","dst_host_srv_count",
-        "dst_host_same_srv_rate","dst_host_diff_srv_rate","dst_host_same_src_port_rate","dst_host_srv_diff_host_rate","dst_host_serror_rate",
-        "dst_host_srv_serror_rate","dst_host_rerror_rate","dst_host_srv_rerror_rate"
+        'dur', 'spkts', 'dpkts', 'sbytes', 'dbytes', 'rate', 'sttl', 'dttl',
+       'sload', 'dload', 'sloss', 'dloss', 'sinpkt', 'dinpkt', 'sjit', 'djit',
+       'swin', 'stcpb', 'dtcpb', 'dwin', 'tcprtt', 'synack', 'ackdat', 'smean',
+       'dmean', 'trans_depth', 'response_body_len', 'ct_srv_src',
+       'ct_state_ttl', 'ct_dst_ltm', 'ct_src_dport_ltm', 'ct_dst_sport_ltm',
+       'ct_dst_src_ltm', 'is_ftp_login', 'ct_ftp_cmd', 'ct_flw_http_mthd',
+       'ct_src_ltm', 'ct_srv_dst', 'is_sm_ips_ports'
     ]
     
     #load dataset uji untuk klasifikasi
-    file = pd.read_csv(file, header=None)
-    file.columns = cols
+    file = pd.read_csv(file)
 
-    data_train = pd.read_csv('df_train.csv')
+    data_unique = pd.read_csv('dataset_unsw.csv')
 
-    file = pd.concat([file, data_train], ignore_index=True)
+    file = pd.concat([file, data_unique], ignore_index=True)
 
     #hapus kolom yang tidak digunakan untuk proses klasifikasi
-    file.drop('difficulty_level', axis='columns', inplace=True)
+    file.drop(['id', 'attack_cat'], axis='columns', inplace=True)
 
     #standarisasi/normalisasi kolom numerik
     x = file.loc[:, numeric_columns].values
@@ -64,27 +45,16 @@ def preprocessing(file):
     principal_df = pd.DataFrame(data=principal_components, columns=['Component 1', 'Component 2', 'Component 3', 'Component 4', 'Component 5', 'Component 6', 'Component 7'])
 
     #menggabungkan kembali data awal dengan hasil reduksi
-    file_final = pd.concat([principal_df, file[['protocol_type', 'service', 'flag','label']]], axis=1)
+    file_final = pd.concat([principal_df, file[['proto', 'service', 'state','label']]], axis=1)
 
-    #transformasi data pengkategorian
-    change_label(file_final)
-
-    #transformasi data labeling
-    multi_label = pd.DataFrame(file_final.label)
-    le2 = LabelEncoder()
-    enc_label = multi_label.apply(le2.fit_transform)
-    file_final['intrusion'] = enc_label
 
     #hapus kolom yang tidak digunakan untuk proses klasifikasi
     file_final.drop('label', axis='columns', inplace=True)
 
     #transformasi data one-hot encoder
-    file_final = pd.get_dummies(file_final, columns=['protocol_type', 'service', 'flag'], prefix="", prefix_sep="")
-
-    #menghapus kolom intrusion
-    file_final = file_final.drop(labels=['intrusion'], axis=1)
+    file_final = pd.get_dummies(file_final, columns=['proto', 'service', 'state'], prefix="", prefix_sep="")
     
-    file_final = file_final.iloc[:-345]
+    file_final = file_final.iloc[:-165]
 
     #menjadikan file_final array
     file_final = np.array(file_final)
@@ -99,12 +69,12 @@ def preprocessing(file):
 def index() :
     return render_template("index.html")
 
-@app.route('/home', methods=['POST'])
+@app.route('/predict', methods=['POST'])
 @cross_origin()
 def hello_world():
     file = request.files["file"]
     data = preprocessing(file)
-    model = tf.keras.models.load_model("model1.h5")
+    model = tf.keras.models.load_model("ori_model_unsw.h5")
     result = model.predict(data)
     return jsonify(result.tolist())
 

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skripsi</title>
+    <title>Skripsi-Muhammad Iqbal Yoshanda</title>
     <link href="{{ url_for('static', filename='output.css') }}" rel="stylesheet">
 </head>
 
@@ -38,6 +38,10 @@
                             <li class="group">
                                 <a href="#klasifikasi"
                                     class="text-base text-dark py-2 mx-8 flex group-hover:text-primary">Klasifikasi</a>
+                            </li>
+                            <li class="group">
+                                <a href="#result"
+                                    class="text-base text-dark py-2 mx-8 flex group-hover:text-primary">Hasil</a>
                             </li>
                         </ul>
                     </nav>
@@ -147,35 +151,44 @@
 
 
     <!--Klasifikasi Section Start-->
-    <section id="klasifikasi" class="pt-36 pb-32 bg-secondary">
+    <section id="klasifikasi" class="pt-36 pb-32 bg-primary">
         <div class="container">
             <div class="w-full px-4">
                 <div class="mx-auto text-center mb-16">
-                    <h4 class="font-semibold text-lg text-primary mb-2 lg:text-2xl">KLASIFIKASI</h4>
-                    <h2 class="font-bold text-3xl text-white mb-4 sm:text-4xl lg:text-5xl">Lorem ipsum dolor sit.</h2>
-                    <p class="fot-medium text-medium text-secondary md:text-lg mb-10">Lorem ipsum dolor sit amet
-                        consectetur adipisicing elit. Quasi, consectetur!</p>
-                    <!--tombol upload-->
-                    <div class="upload-btn-wrapper">
-                        <button class="btn ">Choose File</button>
-                        <input type="file" name="myfile" oninput="predict(this)" />
-                    </div>
+                    <h4 class="font-semibold text-lg text-white mb-2 lg:text-2xl">Klasifikasi</h4>
+                    <h2 class="font-bold text-3xl text-white mb-4 sm:text-4xl lg:text-5xl">Cek Lalu Lintas Jaringan</h2>
+                    <p class="fot-medium text-medium text-white md:text-lg">Upload file csv yang berisi lalu lintas jaringan di bawah ini</p>
+                </div>
+                <div class="flex justify-center items-center p-5 flex-col">
+                    <input class="block w-80 text-sm text-white border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-white focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" type="file" onchange="readFile(this)" id="input_csv">                     
                 </div>
             </div>
         </div>
     </section>
     <!--Klasifikasi Section End-->
 
-    <!--Hasil Section Start-->
-    <section id="hasil" class="pt-32 pb-32 bg-white">
-        <div class="container">
-            <div class="w-full px-4">
-                <div class="mx-auto mb-16 text-center">
-                    <ol id="hasil" class="text-center">
-
-                    </ol>
-                </div>
-            </div>
+      <!--Hasil Section Start-->
+    <section class="w-full bg-blue-50 pt-36 pb-32" id="result">
+        <div class="mx-auto text-center mb-16">
+            <h4 class="font-semibold text-lg text-primary mb-2 lg:text-2xl">Hasil</h4>
+        </div>
+        <div class="container mx-auto py-12">
+            <table class="table-auto w-full border-spacing-y-4 border-separate" id="tabel_hasil">
+                <thead>
+                    <tr>
+                        <th class="p-6">duration</th>
+                        <th class="p-6">protocol_type</th>
+                        <th class="p-6">service</th>
+                        <th class="p-6">state</th>
+                        <th class="p-6">spkts</th>
+                        <th class="p-6">...</th>
+                        <th class="p-6">Test Label</th>
+                        <th class="p-6">Prediction</th>
+                    </tr>
+                </thead>
+                <tbody class="text-center">
+                </tbody>
+            </table>
         </div>
     </section>
     <!--Hasil Section End-->
